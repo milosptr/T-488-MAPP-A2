@@ -1,1 +1,1 @@
-export { DashboardScreen as default } from '@/src/screens';
+export { ContactsListScreen as default } from '@/src/screens';
