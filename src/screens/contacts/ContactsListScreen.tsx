@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
+    Alert,
     FlatList,
     Image,
     View as RNView,
@@ -10,6 +11,7 @@ import {
     TextInput,
     TouchableOpacity,
 } from 'react-native';
+import { TouchableOpacity as GHTouchableOpacity, Swipeable } from 'react-native-gesture-handler';
 
 import { SafeAreaScreen } from '@/src/components';
 import { Text, View } from '@/src/components/ui/Themed';
@@ -19,12 +21,15 @@ import { useTheme } from '@/src/hooks/useTheme';
 import { useStore } from '@/src/store/useStore';
 import type { Contact } from '@/src/types';
 
+
+
 const AVATAR_SIZE = 48;
 
 export const ContactsListScreen = () => {
     const theme = useTheme();
     const [searchQuery, setSearchQuery] = useState('');
     const contacts = useStore(state => state.contacts);
+    const deleteContact = useStore(state => state.deleteContact);
     const { isImporting, handleImport } = useImportContacts();
 
     const filteredAndSortedContacts = useMemo(() => {
@@ -43,45 +48,115 @@ export const ContactsListScreen = () => {
         router.push(`/contacts/${contact.id}`);
     }, []);
 
+    const handleDeleteContact = useCallback((contactId: string, contactName: string) => {
+        Alert.alert(
+            'Delete Contact',
+            `Are you sure you want to delete ${contactName}?`,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: () => deleteContact(contactId),
+                },
+            ]
+        );
+        }, [deleteContact]);
+
     const renderContactItem = useCallback(
-        ({ item }: { item: Contact }) => (
-            <TouchableOpacity
-                style={[
-                    styles.contactItem,
-                    {
-                        backgroundColor: theme.surface,
-                        borderWidth: 1,
-                        borderColor: theme.outline,
-                    },
-                ]}
+    ({ item }: { item: Contact }) => {
+        let swipeableRef: Swipeable | null = null;
+
+        return (
+        <Swipeable
+            ref={(ref) => { swipeableRef = ref; }}
+            friction={2}
+            leftThreshold={40}
+            rightThreshold={40}
+            overshootLeft={false}
+            overshootRight={false}
+            onSwipeableOpen={(direction) => {
+                if (direction === 'right') {
+                    handleDeleteContact(item.id, item.name);
+                    swipeableRef?.close();
+                } else if (direction === 'left') {
+                    router.push(`/modals/edit-contact/${item.id}` as any);
+                    swipeableRef?.close();
+                }
+            }}
+            renderLeftActions={() => (
+                <View
+                    style={[
+                        styles.contactItem,
+                        {
+                            backgroundColor: '#4c67ffff',
+                            borderWidth: 1,
+                            borderColor: theme.outline,
+                        },
+                        ]}
+                >
+                    <Ionicons name="pencil" size={24} color="white" />
+                    <Text style={{ color: 'white', fontSize: 12, marginTop: 4 }}>Edit</Text>
+                </View>
+            )}
+            renderRightActions={() => (
+                <View
+                    style={[
+                        styles.contactItem,
+                        {
+                            backgroundColor: '#df2b0bff',
+                            borderWidth: 1,
+                            borderColor: theme.outline,
+                        },
+                        ]}
+                >
+                    <Ionicons name="trash" size={24} color="white" />
+                    <Text style={{ color: 'white', fontSize: 12, marginTop: 4 }}>Delete</Text>
+                </View>
+            )}
+            >
+            <GHTouchableOpacity
                 onPress={() => handleContactPress(item)}
-                activeOpacity={0.7}
+                activeOpacity={0.55}
+                style={[
+                styles.contactItem,
+                {
+                    backgroundColor: theme.surface,
+                    borderWidth: 1,
+                    borderColor: theme.outline,
+                },
+                ]}
             >
                 {item.image ? (
-                    <Image source={{ uri: item.image }} style={styles.avatar} />
+                <Image source={{ uri: item.image }} style={styles.avatar} />
                 ) : (
-                    <RNView
-                        style={[
-                            styles.avatarPlaceholder,
-                            { backgroundColor: theme.primaryContainer },
-                        ]}
-                    >
-                        <Text style={[styles.avatarText, { color: theme.onPrimaryContainer }]}>
-                            {item.name.charAt(0).toUpperCase()}
-                        </Text>
-                    </RNView>
-                )}
-                <View style={styles.contactInfo}>
-                    <Text style={styles.contactName}>{item.name}</Text>
-                    <Text style={[styles.contactPhone, { color: theme.onSurfaceVariant }]}>
-                        {item.phoneNumber}
+                <RNView
+                    style={[
+                    styles.avatarPlaceholder,
+                    { backgroundColor: theme.primaryContainer },
+                    ]}
+                >   
+                    <Text style={[styles.avatarText, { color: theme.onPrimaryContainer }]}>
+                    {item.name.charAt(0).toUpperCase()}
                     </Text>
+                </RNView>
+                )}
+
+                <View style={styles.contactInfo}>
+                <Text style={styles.contactName}>{item.name}</Text>
+                <Text style={[styles.contactPhone, { color: theme.onSurfaceVariant }]}>
+                    {item.phoneNumber}
+                </Text>
                 </View>
+
                 <Ionicons name="chevron-forward" size={20} color={theme.onSurfaceVariant} />
-            </TouchableOpacity>
-        ),
-        [theme, handleContactPress]
+            </GHTouchableOpacity>
+        </Swipeable>
+        );
+    },
+    [theme, handleContactPress, handleDeleteContact]
     );
+
 
     const renderEmptyState = useCallback(
         () => (
