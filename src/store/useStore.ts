@@ -1,83 +1,123 @@
 import * as Crypto from 'expo-crypto';
 import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
-import { useShallow } from 'zustand/react/shallow';
 
 import type { Contact, CreateContactInput, UpdateContactInput } from '@/src/types';
 
-import { fileSystemStorage } from './fileSystemStorage';
+import {
+    deleteContactFile,
+    ensureContactsDir,
+    readAllContacts,
+    writeContactFile,
+} from './contactFileSystem';
 
 interface StoreState {
     contacts: Contact[];
-    addContact: (input: CreateContactInput) => Contact;
-    updateContact: (input: UpdateContactInput) => void;
-    deleteContact: (id: string) => void;
+    _isHydrated: boolean;
+    addContact: (input: CreateContactInput) => Promise<Contact>;
+    updateContact: (input: UpdateContactInput) => Promise<void>;
+    deleteContact: (id: string) => Promise<void>;
     getContactById: (id: string) => Contact | undefined;
-    importContacts: (contacts: Contact[]) => void;
+    importContacts: (contacts: Contact[]) => Promise<void>;
+    resetContacts: () => Promise<void>;
+    initializeStore: () => Promise<void>;
 }
 
-const useStoreBase = create<StoreState>()(
-    persist(
-        (set, get) => ({
-            contacts: [],
+const useStoreBase = create<StoreState>()((set, get) => ({
+    contacts: [],
+    _isHydrated: false,
 
-            addContact: (input: CreateContactInput) => {
-                const now = new Date().toISOString();
-                const newContact: Contact = {
-                    id: Crypto.randomUUID(),
-                    ...input,
-                    createdAt: now,
-                    updatedAt: now,
-                };
-                set(state => ({
-                    contacts: [...state.contacts, newContact],
-                }));
-                return newContact;
-            },
-
-            updateContact: (input: UpdateContactInput) => {
-                set(state => ({
-                    contacts: state.contacts.map(contact =>
-                        contact.id === input.id
-                            ? {
-                                  ...contact,
-                                  ...input,
-                                  updatedAt: new Date().toISOString(),
-                              }
-                            : contact
-                    ),
-                }));
-            },
-
-            deleteContact: (id: string) => {
-                set(state => ({
-                    contacts: state.contacts.filter(contact => contact.id !== id),
-                }));
-            },
-
-            getContactById: (id: string) => {
-                return get().contacts.find(contact => contact.id === id);
-            },
-
-            importContacts: (contacts: Contact[]) => {
-                set(state => ({
-                    contacts: [...state.contacts, ...contacts],
-                }));
-            },
-        }),
-        {
-            name: 'mapp-store',
-            storage: createJSONStorage(() => fileSystemStorage),
-            partialize: state => ({
-                contacts: state.contacts,
-            }),
-            onRehydrateStorage: () => () => {},
+    initializeStore: async () => {
+        try {
+            await ensureContactsDir();
+            const contacts = await readAllContacts();
+            set({ contacts, _isHydrated: true });
+        } catch (error) {
+            console.error('Error initializing store:', error);
+            set({ _isHydrated: true });
         }
-    )
-);
+    },
+
+    addContact: async (input: CreateContactInput) => {
+        const now = new Date().toISOString();
+        const newContact: Contact = {
+            id: Crypto.randomUUID(),
+            ...input,
+            createdAt: now,
+            updatedAt: now,
+        };
+
+        // Write to individual file
+        await writeContactFile(newContact);
+
+        // Update in-memory state
+        set(state => ({
+            contacts: [...state.contacts, newContact],
+        }));
+
+        return newContact;
+    },
+
+    updateContact: async (input: UpdateContactInput) => {
+        const oldContact = get().contacts.find(c => c.id === input.id);
+        if (!oldContact) return;
+
+        const updatedContact: Contact = {
+            ...oldContact,
+            ...input,
+            updatedAt: new Date().toISOString(),
+        };
+
+        // Write new file first (safe - prevents data loss)
+        await writeContactFile(updatedContact);
+
+        // Delete old file only after new file is written successfully
+        if (oldContact.name !== updatedContact.name) {
+            await deleteContactFile(oldContact.name, oldContact.id);
+        }
+
+        // Update in-memory state
+        set(state => ({
+            contacts: state.contacts.map(contact =>
+                contact.id === input.id ? updatedContact : contact
+            ),
+        }));
+    },
+
+    deleteContact: async (id: string) => {
+        const contact = get().contacts.find(c => c.id === id);
+        if (!contact) return;
+
+        // Delete the file
+        await deleteContactFile(contact.name, contact.id);
+
+        // Update in-memory state
+        set(state => ({
+            contacts: state.contacts.filter(c => c.id !== id),
+        }));
+    },
+
+    getContactById: (id: string) => {
+        return get().contacts.find(contact => contact.id === id);
+    },
+
+    importContacts: async (contacts: Contact[]) => {
+        // Write all contacts to individual files in parallel
+        await Promise.all(contacts.map(contact => writeContactFile(contact)));
+
+        // Update in-memory state
+        set(state => ({
+            contacts: [...state.contacts, ...contacts],
+        }));
+    },
+
+    resetContacts: async () => {
+        const contacts = get().contacts;
+
+        // Delete all contact files in parallel
+        await Promise.all(contacts.map(contact => deleteContactFile(contact.name, contact.id)));
+
+        set({ contacts: [] });
+    },
+}));
 
 export const useStore = useStoreBase;
-
-export function useShallowStore<T>(selector: (state: StoreState) => T): T {
-    return useStoreBase(useShallow(selector));
-}

@@ -2,7 +2,7 @@ export interface Contact {
     id: string;
     name: string;
     phoneNumber: string;
-    image: string | null;
+    photo: string | null;
     createdAt?: string;
     updatedAt?: string;
 }

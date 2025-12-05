@@ -15,7 +15,7 @@
 
 ## Description
 
-The Contactor is a mobile contacts management application built with React Native and Expo. This application enables users to manage their personal contacts with full CRUD operations, including creating, viewing, editing, and deleting contacts. Contacts are stored persistently using Expo FileSystem with Zustand state management, ensuring data remains available across app sessions.
+The Contactor is a mobile contacts management application built with React Native and Expo. This application enables users to manage their personal contacts with full CRUD operations, including creating, viewing, editing, and deleting contacts. Each contact is stored as an individual JSON file (`<name>-<uuid>.json`) using Expo FileSystem, with Zustand for in-memory state management, ensuring data remains available across app sessions.
 
 The application features a clean, intuitive interface with contact list viewing (alphabetically sorted), real-time search functionality, detailed contact views, and form-based contact management. Built with modern mobile development practices using Expo Router for file-based navigation, Zustand for state management, and TypeScript for type safety.
 
@@ -134,21 +134,21 @@ The application implements features based on Assignment II requirements:
 #### 3. Add Contact (2 points)
 
 - Form-based interface to add new contacts
-- Input fields for name, phone number, and image
-- Contacts stored persistently using Expo FileSystem
-- Data persisted in JSON format with all required properties
+- Input fields for name, phone number, and photo
+- Each contact stored as individual JSON file: `<name>-<uuid>.json`
+- Data persisted in JSON format with all required properties (`name`, `phoneNumber`, `photo`)
 
 #### 4. Contact Details View (1 point)
 
 - Detailed information display for selected contacts
-- Shows contact name, image, and phone number
+- Shows contact name, photo, and phone number
 - Clean, organized layout
 
 #### 5. Edit Contact (2 points)
 
-- All contact properties are editable (name, phone number, image)
+- All contact properties are editable (name, phone number, photo)
 - Form pre-populated with existing contact data
-- Updates persisted to storage in JSON format
+- JSON file recreated with updated information (if name changes, old file deleted, new file created)
 
 ### Extra Features (3 points)
 
@@ -185,8 +185,8 @@ The application implements features based on Assignment II requirements:
 - Expo Router (~6.0.15) - File-based routing and navigation
 - React Navigation (v7.1.8)
 - TypeScript (~5.9.2)
-- Zustand (v5.0.8) - Lightweight state management
-- Expo FileSystem - Persistent JSON file storage for contacts
+- Zustand (v5.0.8) - Lightweight in-memory state management
+- Expo FileSystem - Individual JSON file storage per contact (`<name>-<uuid>.json`)
 - Expo Contacts - Import contacts from device
 - Expo Image Picker - Camera and photo gallery access
 - Expo Linking - Deep linking for phone calls
@@ -285,8 +285,8 @@ T-488-MAPP-A2/
 │   │   │   └── index.ts
 │   │   └── index.ts
 │   ├── store/
-│   │   ├── fileSystemStorage.ts      # Expo FileSystem storage adapter
-│   │   └── useStore.ts               # Zustand store with FileSystem persistence
+│   │   ├── contactFileSystem.ts      # Individual file storage utilities
+│   │   └── useStore.ts               # Zustand store with manual file persistence
 │   ├── types/                        # TypeScript interfaces
 │   │   ├── contact.ts                # Contact type definitions
 │   │   └── index.ts
@@ -306,7 +306,7 @@ T-488-MAPP-A2/
 - `/src/components` - Reusable UI components organized by category
 - `/src/screens/contacts` - Contact-related screen components
 - `/src/hooks` - Custom React hooks (theme, forms, image picker, import contacts)
-- `/src/store` - Zustand store with FileSystem persistence
+- `/src/store` - Zustand store with individual file persistence (`contactFileSystem.ts` + `useStore.ts`)
 - `/src/constants` - Design tokens and color definitions
 - `/src/types` - TypeScript interfaces for type safety
 
@@ -314,19 +314,19 @@ T-488-MAPP-A2/
 
 ### FileSystem Persistence
 
-The Contactor uses Expo FileSystem with Zustand persist middleware to store contact data:
+The Contactor uses Expo FileSystem to store each contact as an individual JSON file:
 
-- **Storage Method**: Expo FileSystem (JSON file storage in document directory)
-- **File Location**: `contacts.json` in the app's document directory
-- **Persistence**: Zustand persist middleware automatically syncs state to the file system
+- **Storage Method**: Expo FileSystem (individual JSON files per contact)
+- **File Location**: `documents/contacts/` directory
+- **File Naming**: `<Name>-<uuid>.json` (e.g., `John_Doe-550e8400-e29b-41d4-a716-446655440000.json`)
 - **Data Format**: JSON format with the following structure:
 
 ```json
 {
-    "id": "uuid-generated-identifier",
-    "name": "Contact Name",
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "John Doe",
     "phoneNumber": "+1234567890",
-    "image": "file://path/to/image.jpg",
+    "photo": "file://path/to/photo.jpg",
     "createdAt": "2024-01-01T00:00:00.000Z",
     "updatedAt": "2024-01-01T00:00:00.000Z"
 }
@@ -334,14 +334,16 @@ The Contactor uses Expo FileSystem with Zustand persist middleware to store cont
 
 - **Persistence**: All data persists across app sessions automatically
 - **Operations**: Full CRUD (Create, Read, Update, Delete) operations supported
+- **Name Changes**: When a contact's name is updated, the old file is deleted and a new file with the updated name is created
 
 ### State Management
 
-The application uses Zustand for lightweight state management with FileSystem persistence:
+The application uses Zustand for in-memory state management with manual FileSystem persistence:
 
 - **Store State**: Contains contacts array and hydration state
 - **CRUD Actions**: addContact, updateContact, deleteContact, getContactById, importContacts
-- **Automatic Persistence**: All state changes are automatically synced to the file system
+- **File Operations**: Each action writes/deletes individual contact files
+- **Initialization**: On app start, all contact files are read from the `contacts/` directory
 
 **Usage Example:**
 
@@ -351,16 +353,17 @@ import { useStore } from '@/src/store/useStore';
 // Access state
 const contacts = useStore(state => state.contacts);
 
-// Add a contact
+// Add a contact (creates <Name>-<uuid>.json file)
 const addContact = useStore(state => state.addContact);
-addContact({ name: 'John Doe', phoneNumber: '+1234567890', image: null });
+await addContact({ name: 'John Doe', phoneNumber: '+1234567890', photo: null });
 
-// Get contact by ID
-const getContactById = useStore(state => state.getContactById);
-const contact = getContactById('contact-id');
+// Update a contact (recreates file if name changed)
+const updateContact = useStore(state => state.updateContact);
+await updateContact({ id: 'contact-id', name: 'Jane Doe' });
 
-// Import contacts from device
-const importContacts = useStore(state => state.importContacts);
+// Delete a contact (removes the JSON file)
+const deleteContact = useStore(state => state.deleteContact);
+await deleteContact('contact-id');
 ```
 
 ## Future Improvements

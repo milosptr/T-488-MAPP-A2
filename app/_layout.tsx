@@ -7,6 +7,7 @@ import React, { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/src/hooks/useColorScheme';
+import { useStore } from '@/src/store/useStore';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -23,18 +24,24 @@ export default function RootLayout() {
         SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
         ...FontAwesome.font,
     });
+    const initializeStore = useStore(state => state.initializeStore);
+    const isHydrated = useStore(state => state._isHydrated);
 
     useEffect(() => {
         if (error) throw error;
     }, [error]);
 
     useEffect(() => {
-        if (loaded) {
+        initializeStore();
+    }, [initializeStore]);
+
+    useEffect(() => {
+        if (loaded && isHydrated) {
             SplashScreen.hideAsync();
         }
-    }, [loaded]);
+    }, [loaded, isHydrated]);
 
-    if (!loaded) {
+    if (!loaded || !isHydrated) {
         return null;
     }
 

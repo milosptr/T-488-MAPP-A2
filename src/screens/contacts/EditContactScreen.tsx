@@ -32,25 +32,25 @@ export const EditContactScreen = () => {
     const {
         name,
         phoneNumber,
-        image,
+        photo,
         errors,
         setName,
         setPhoneNumber,
-        setImage,
+        setPhoto,
         validate,
         getFormData,
     } = useContactForm({ initialData: contact });
 
     const { showImageOptions } = useImagePicker({
-        onImageChange: setImage,
+        onImageChange: setPhoto,
         showRemoveOption: true,
-        currentImage: image,
+        currentImage: photo,
     });
 
-    const handleSubmit = useCallback(() => {
+    const handleSubmit = useCallback(async () => {
         if (!contact || !validate()) return;
 
-        updateContact({
+        await updateContact({
             id: contact.id,
             ...getFormData(),
         });
@@ -84,8 +84,8 @@ export const EditContactScreen = () => {
                 >
                     <View style={styles.avatarSection}>
                         <TouchableOpacity onPress={showImageOptions} activeOpacity={0.8}>
-                            {image ? (
-                                <Image source={{ uri: image }} style={styles.avatar} />
+                            {photo ? (
+                                <Image source={{ uri: photo }} style={styles.avatar} />
                             ) : (
                                 <RNView
                                     style={[

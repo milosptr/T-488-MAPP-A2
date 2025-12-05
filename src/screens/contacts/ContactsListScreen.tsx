@@ -25,6 +25,7 @@ export const ContactsListScreen = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const contacts = useStore(state => state.contacts);
     const deleteContact = useStore(state => state.deleteContact);
+    const resetContacts = useStore(state => state.resetContacts);
     const { isImporting, handleImport } = useImportContacts();
 
     const filteredAndSortedContacts = useMemo(() => {
@@ -63,7 +64,7 @@ export const ContactsListScreen = () => {
                 {
                     text: 'Delete',
                     style: 'destructive',
-                    onPress: () => deleteContact(contactId),
+                    onPress: async () => deleteContact(contactId),
                 },
             ]);
         },
@@ -113,11 +114,26 @@ export const ContactsListScreen = () => {
         [theme, searchQuery]
     );
 
+    const handleResetContacts = useCallback(() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        Alert.alert('Reset Contacts', 'Are you sure you want to reset all your contacts?', [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Reset', style: 'destructive', onPress: async () => resetContacts() },
+        ]);
+    }, [resetContacts]);
+
     return (
         <SafeAreaScreen style={{ backgroundColor: theme.background }}>
             <View style={styles.header}>
                 <Text style={styles.title}>Contacts</Text>
                 <View style={styles.headerButtons}>
+                    <TouchableOpacity
+                        style={[styles.headerButton, { backgroundColor: theme.errorContainer }]}
+                        onPress={handleResetContacts}
+                        activeOpacity={0.8}
+                    >
+                        <Ionicons name="sync" size={24} color={theme.onPrimary} />
+                    </TouchableOpacity>
                     <TouchableOpacity
                         style={[styles.headerButton, { backgroundColor: theme.secondaryContainer }]}
                         onPress={handleImportWithHaptics}

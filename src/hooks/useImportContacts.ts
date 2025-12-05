@@ -75,14 +75,14 @@ export const useImportContacts = () => {
                     id: Crypto.randomUUID(),
                     name: contact.name || 'Unknown',
                     phoneNumber,
-                    image: contact.image?.uri || null,
+                    photo: contact.image?.uri || null,
                     createdAt: now,
                     updatedAt: now,
                 });
             }
 
             if (newContacts.length > 0) {
-                importContacts(newContacts);
+                await importContacts(newContacts);
             }
 
             const message =

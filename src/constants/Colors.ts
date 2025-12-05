@@ -18,6 +18,7 @@ const palette = {
     error: '#B44146',
     errorLight: '#D4666A',
     errorContainer: '#F8E8E9',
+    errorContainerLight: '#db8a8f',
 
     success: '#4A8B5C',
     successLight: '#6AAE7A',
@@ -51,7 +52,7 @@ export default {
 
         error: palette.error,
         onError: palette.white,
-        errorContainer: palette.errorContainer,
+        errorContainer: palette.errorContainerLight,
         onErrorContainer: palette.error,
         success: palette.success,
         onSuccess: palette.white,

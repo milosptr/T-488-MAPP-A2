@@ -2,9 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo } from 'react';
-import { Alert, Image, Linking, StyleSheet, TouchableOpacity, View as RNView } from 'react-native';
+import { Alert, Image, Linking, View as RNView, StyleSheet, TouchableOpacity } from 'react-native';
 
-import { SafeAreaScreen } from '@/src/components';
+import { Button, SafeAreaScreen } from '@/src/components';
 import { Text, View } from '@/src/components/ui/Themed';
 import { borderRadius, spacing } from '@/src/constants/DesignTokens';
 import { useTheme } from '@/src/hooks/useTheme';
@@ -30,7 +30,7 @@ export const ContactDetailScreen = () => {
                 Alert.alert('Error', 'Phone calls are not supported on this device');
             }
         });
-    }, [contact?.phoneNumber]);
+    }, [contact]);
 
     const handleEdit = useCallback(() => {
         if (!contact) return;
@@ -50,8 +50,8 @@ export const ContactDetailScreen = () => {
                 {
                     text: 'Delete',
                     style: 'destructive',
-                    onPress: () => {
-                        deleteContact(contact.id);
+                    onPress: async () => {
+                        await deleteContact(contact.id);
                         router.back();
                     },
                 },
@@ -67,7 +67,7 @@ export const ContactDetailScreen = () => {
             month: 'long',
             day: 'numeric',
         });
-    }, [contact?.createdAt]);
+    }, [contact]);
 
     if (!contact) {
         return (
@@ -86,8 +86,8 @@ export const ContactDetailScreen = () => {
         <SafeAreaScreen edges={['bottom']} style={{ backgroundColor: theme.background }}>
             <View style={styles.container}>
                 <View style={styles.avatarSection}>
-                    {contact.image ? (
-                        <Image source={{ uri: contact.image }} style={styles.avatar} />
+                    {contact.photo ? (
+                        <Image source={{ uri: contact.photo }} style={styles.avatar} />
                     ) : (
                         <RNView
                             style={[
@@ -152,14 +152,17 @@ export const ContactDetailScreen = () => {
                     )}
                 </View>
 
-                <TouchableOpacity
-                    style={[styles.deleteButton, { backgroundColor: theme.errorContainer }]}
-                    onPress={handleDelete}
-                    activeOpacity={0.8}
-                >
-                    <Ionicons name="trash-outline" size={20} color={theme.error} />
-                    <Text style={[styles.deleteText, { color: theme.error }]}>Delete Contact</Text>
-                </TouchableOpacity>
+                <View style={styles.deleteButtonContainer}>
+                    <Button
+                        title="Delete Contact"
+                        variant="danger"
+                        onPress={handleDelete}
+                        size="large"
+                        leadingIcon={
+                            <Ionicons name="trash-outline" size={20} color={theme.onError} />
+                        }
+                    />
+                </View>
             </View>
         </SafeAreaScreen>
     );
@@ -243,17 +246,7 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         marginTop: 2,
     },
-    deleteButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: spacing.lg,
-        borderRadius: borderRadius.lg,
+    deleteButtonContainer: {
         marginTop: spacing.xl,
-        gap: spacing.sm,
-    },
-    deleteText: {
-        fontSize: 16,
-        fontWeight: '600',
     },
 });

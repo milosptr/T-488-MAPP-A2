@@ -16,14 +16,14 @@ export const useContactForm = (options?: UseContactFormOptions) => {
 
     const [name, setName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
-    const [image, setImage] = useState<string | null>(null);
+    const [photo, setPhoto] = useState<string | null>(null);
     const [errors, setErrors] = useState<ContactFormErrors>({});
 
     useEffect(() => {
         if (initialData) {
             setName(initialData.name);
             setPhoneNumber(initialData.phoneNumber);
-            setImage(initialData.image);
+            setPhoto(initialData.photo);
         }
     }, [initialData]);
 
@@ -45,7 +45,7 @@ export const useContactForm = (options?: UseContactFormOptions) => {
     const reset = useCallback(() => {
         setName('');
         setPhoneNumber('');
-        setImage(null);
+        setPhoto(null);
         setErrors({});
     }, []);
 
@@ -53,19 +53,19 @@ export const useContactForm = (options?: UseContactFormOptions) => {
         () => ({
             name: name.trim(),
             phoneNumber: phoneNumber.trim(),
-            image,
+            photo,
         }),
-        [name, phoneNumber, image]
+        [name, phoneNumber, photo]
     );
 
     return {
         name,
         phoneNumber,
-        image,
+        photo,
         errors,
         setName,
         setPhoneNumber,
-        setImage,
+        setPhoto,
         validate,
         reset,
         getFormData,

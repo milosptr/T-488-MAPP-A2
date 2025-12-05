@@ -37,8 +37,8 @@ export const ContactItem = memo(({ item, onPress }: ContactItemProps) => {
                         opacity: pressed ? 0.75 : 1,
                     }}
                 >
-                    {item.image ? (
-                        <Image source={{ uri: item.image }} style={styles.avatar} />
+                    {item.photo ? (
+                        <Image source={{ uri: item.photo }} style={styles.avatar} />
                     ) : (
                         <RNView
                             style={[

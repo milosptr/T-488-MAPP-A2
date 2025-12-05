@@ -30,24 +30,24 @@ export const AddContactScreen = () => {
     const {
         name,
         phoneNumber,
-        image,
+        photo,
         errors,
         setName,
         setPhoneNumber,
-        setImage,
+        setPhoto,
         validate,
         getFormData,
     } = useContactForm();
 
     const { showImageOptions } = useImagePicker({
-        onImageChange: setImage,
+        onImageChange: setPhoto,
         showRemoveOption: false,
     });
 
-    const handleSubmit = useCallback(() => {
+    const handleSubmit = useCallback(async () => {
         if (!validate()) return;
 
-        addContact(getFormData());
+        await addContact(getFormData());
         router.back();
     }, [validate, addContact, getFormData]);
 
@@ -64,8 +64,8 @@ export const AddContactScreen = () => {
                 >
                     <View style={styles.avatarSection}>
                         <TouchableOpacity onPress={showImageOptions} activeOpacity={0.8}>
-                            {image ? (
-                                <Image source={{ uri: image }} style={styles.avatar} />
+                            {photo ? (
+                                <Image source={{ uri: photo }} style={styles.avatar} />
                             ) : (
                                 <RNView
                                     style={[
