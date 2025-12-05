@@ -50,6 +50,12 @@ function RootLayoutNav() {
                 <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
                     <Stack screenOptions={{ headerShown: false }}>
                         <Stack.Screen name="(app)" />
+                        <Stack.Screen
+                            name="modals"
+                            options={{
+                                presentation: 'modal',
+                            }}
+                        />
                         <Stack.Screen name="+not-found" />
                     </Stack>
                 </ThemeProvider>

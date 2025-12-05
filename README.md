@@ -15,7 +15,7 @@
 
 ## Description
 
-The Contactor is a mobile contacts management application built with React Native and Expo. This application enables users to manage their personal contacts with full CRUD operations, including creating, viewing, editing, and deleting contacts. Contacts are stored persistently on the device's file system using Expo FileSystem, ensuring data remains available across app sessions.
+The Contactor is a mobile contacts management application built with React Native and Expo. This application enables users to manage their personal contacts with full CRUD operations, including creating, viewing, editing, and deleting contacts. Contacts are stored persistently using Expo FileSystem with Zustand state management, ensuring data remains available across app sessions.
 
 The application features a clean, intuitive interface with contact list viewing (alphabetically sorted), real-time search functionality, detailed contact views, and form-based contact management. Built with modern mobile development practices using Expo Router for file-based navigation, Zustand for state management, and TypeScript for type safety.
 
@@ -62,7 +62,7 @@ The application features a clean, intuitive interface with contact list viewing 
 4. Clone/download the project and install dependencies
 
     ```bash
-    cd MAPP-2
+    cd T-488-MAPP-A2
     npm install
     ```
 
@@ -83,7 +83,7 @@ The application features a clean, intuitive interface with contact list viewing 
 
 ### Navigate to project directory
 
-`cd MAPP-2`
+`cd T-488-MAPP-A2`
 
 ### Install dependencies
 
@@ -128,7 +128,7 @@ The application implements features based on Assignment II requirements:
 
 - Form-based interface to add new contacts
 - Input fields for name, phone number, and image
-- Contacts stored in file system using Expo FileSystem
+- Contacts stored persistently using Expo FileSystem
 - Data persisted in JSON format with all required properties
 
 #### 4. Contact Details View (1 point)
@@ -141,7 +141,7 @@ The application implements features based on Assignment II requirements:
 
 - All contact properties are editable (name, phone number, image)
 - Form pre-populated with existing contact data
-- Updates persisted to file system in JSON format
+- Updates persisted to storage in JSON format
 
 ### Extra Features (3 points)
 
@@ -149,6 +149,7 @@ The application implements features based on Assignment II requirements:
 
 - Users can import contacts from their device's native contact list
 - Seamless integration with device contacts
+- Duplicate detection to prevent importing existing contacts
 
 #### Camera & Photo Import (1 point)
 
@@ -162,6 +163,14 @@ The application implements features based on Assignment II requirements:
 - Call button on contact detail view
 - Deep linking to native phone application
 
+### Additional Polish
+
+- **Swipe Gestures**: Swipe left to edit, swipe right to delete contacts
+- **Haptic Feedback**: Tactile feedback for all user interactions
+- **Dark/Light Mode**: Automatic theme switching based on system preference
+- **Form Validation**: Required field validation with error messages
+- **Empty States**: User-friendly messaging when no contacts exist
+
 ## Technologies Used
 
 - React Native (v0.81.5)
@@ -170,11 +179,12 @@ The application implements features based on Assignment II requirements:
 - React Navigation (v7.1.8)
 - TypeScript (~5.9.2)
 - Zustand (v5.0.8) - Lightweight state management
-- Expo FileSystem - Persistent file storage for contacts
+- Expo FileSystem - Persistent JSON file storage for contacts
 - Expo Contacts - Import contacts from device
 - Expo Image Picker - Camera and photo gallery access
 - Expo Linking - Deep linking for phone calls
-- @gorhom/bottom-sheet (v5.2.6) - Gesture-driven bottom sheet modals
+- Expo Haptics - Tactile feedback for user interactions
+- Expo Crypto - UUID generation for contact IDs
 - Expo Vector Icons (v15.0.3)
 - React (v19.1.0)
 - ESLint (v9.39.1) - Code quality and linting
@@ -210,12 +220,18 @@ No platform-specific features at this time. The application uses React Native's 
 ## Project Structure
 
 ```
-MAPP-2/
+T-488-MAPP-A2/
 ├── app/                              # Expo Router navigation
 │   ├── (app)/                        # Main app group
 │   │   ├── _layout.tsx               # App stack layout
-│   │   └── index.tsx                 # Main screen
+│   │   ├── index.tsx                 # Contacts list screen
+│   │   └── contacts/
+│   │       └── [id].tsx              # Contact detail screen
 │   ├── modals/                       # Modal screens
+│   │   ├── _layout.tsx               # Modal stack layout
+│   │   ├── add-contact.tsx           # Add contact modal
+│   │   └── edit-contact/
+│   │       └── [id].tsx              # Edit contact modal
 │   ├── _layout.tsx                   # Root layout (providers, store hydration)
 │   └── +not-found.tsx                # 404 error screen
 ├── assets/                           # Static assets
@@ -228,15 +244,15 @@ MAPP-2/
 │       └── splash-icon.png
 ├── src/                              # Source code
 │   ├── components/                   # Reusable React components
-│   │   ├── bottom-sheet/             # Bottom sheet modals
-│   │   │   ├── Backdrop.tsx
-│   │   │   ├── BottomSheetModal.tsx
+│   │   ├── contacts/                 # Contact-specific components
+│   │   │   ├── ContactItem.tsx       # Contact list item
 │   │   │   └── index.ts
 │   │   ├── layout/                   # Layout components
 │   │   │   ├── SafeAreaScreen.tsx
 │   │   │   └── index.ts
 │   │   ├── ui/                       # UI primitives
 │   │   │   ├── Button/
+│   │   │   ├── SwipeableRow/         # Swipeable list item with actions
 │   │   │   ├── TextInput/
 │   │   │   ├── Themed.tsx
 │   │   │   └── index.ts
@@ -246,17 +262,27 @@ MAPP-2/
 │   │   └── DesignTokens.ts           # Spacing, border radius
 │   ├── hooks/
 │   │   ├── useColorScheme.ts
+│   │   ├── useContactForm.ts         # Shared form logic for add/edit
+│   │   ├── useImagePicker.ts         # Camera and gallery image picker
+│   │   ├── useImportContacts.ts      # Import contacts from device
 │   │   └── useTheme.ts
-│   ├── lib/                          # Internal libraries
 │   ├── screens/                      # Screen components
 │   │   ├── common/
 │   │   │   ├── NotFoundScreen.tsx
 │   │   │   └── index.ts
-│   │   ├── Dashboard.tsx
+│   │   ├── contacts/
+│   │   │   ├── AddContactScreen.tsx
+│   │   │   ├── ContactDetailScreen.tsx
+│   │   │   ├── ContactsListScreen.tsx
+│   │   │   ├── EditContactScreen.tsx
+│   │   │   └── index.ts
 │   │   └── index.ts
 │   ├── store/
-│   │   └── useStore.ts               # Zustand store
+│   │   ├── fileSystemStorage.ts      # Expo FileSystem storage adapter
+│   │   └── useStore.ts               # Zustand store with FileSystem persistence
 │   ├── types/                        # TypeScript interfaces
+│   │   ├── contact.ts                # Contact type definitions
+│   │   └── index.ts
 │   └── utils/                        # Utility functions
 ├── eslint.config.js                  # ESLint configuration (flat config)
 ├── .prettierrc.js                    # Prettier configuration
@@ -268,42 +294,47 @@ MAPP-2/
 **Key Directory Explanations:**
 
 - `/app` - Expo Router file-based routing with modal presentation
+- `/app/(app)` - Main app screens (contacts list, contact detail)
+- `/app/modals` - Modal screens for add/edit contact forms
 - `/src/components` - Reusable UI components organized by category
-- `/src/screens` - Screen components separated from routing
-- `/src/hooks` - Custom React hooks for theme and color scheme
-- `/src/store` - Zustand store for state management
+- `/src/screens/contacts` - Contact-related screen components
+- `/src/hooks` - Custom React hooks (theme, forms, image picker, import contacts)
+- `/src/store` - Zustand store with FileSystem persistence
 - `/src/constants` - Design tokens and color definitions
 - `/src/types` - TypeScript interfaces for type safety
-- `/src/lib` - Internal libraries and utilities
 
 ## Data Storage
 
-### File System Storage
+### FileSystem Persistence
 
-The Contactor uses Expo FileSystem to persist contact data on the device:
+The Contactor uses Expo FileSystem with Zustand persist middleware to store contact data:
 
-- **Storage Location**: Contacts are stored in the app's document directory
+- **Storage Method**: Expo FileSystem (JSON file storage in document directory)
+- **File Location**: `contacts.json` in the app's document directory
+- **Persistence**: Zustand persist middleware automatically syncs state to the file system
 - **Data Format**: JSON format with the following structure:
 
 ```json
 {
-    "id": "unique-identifier",
+    "id": "uuid-generated-identifier",
     "name": "Contact Name",
     "phoneNumber": "+1234567890",
-    "image": "file://path/to/image.jpg"
+    "image": "file://path/to/image.jpg",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
 }
 ```
 
-- **Persistence**: All data persists across app sessions
+- **Persistence**: All data persists across app sessions automatically
 - **Operations**: Full CRUD (Create, Read, Update, Delete) operations supported
 
 ### State Management
 
-The application uses Zustand for lightweight state management:
+The application uses Zustand for lightweight state management with FileSystem persistence:
 
-- **Store State**: Contains contacts array and loading states
-- **CRUD Actions**: addContact, updateContact, deleteContact, importContacts
-- **File System Integration**: All state changes are synchronized with file system storage
+- **Store State**: Contains contacts array and hydration state
+- **CRUD Actions**: addContact, updateContact, deleteContact, getContactById, importContacts
+- **Automatic Persistence**: All state changes are automatically synced to the file system
 
 **Usage Example:**
 
@@ -315,6 +346,14 @@ const contacts = useStore(state => state.contacts);
 
 // Add a contact
 const addContact = useStore(state => state.addContact);
+addContact({ name: 'John Doe', phoneNumber: '+1234567890', image: null });
+
+// Get contact by ID
+const getContactById = useStore(state => state.getContactById);
+const contact = getContactById('contact-id');
+
+// Import contacts from device
+const importContacts = useStore(state => state.importContacts);
 ```
 
 ## Future Improvements

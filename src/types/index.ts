@@ -1,6 +1,1 @@
-export type {
-    Contact,
-    CreateContactInput,
-    UpdateContactInput,
-    ImportedContact,
-} from './contact';
+export type { Contact, CreateContactInput, UpdateContactInput } from './contact';

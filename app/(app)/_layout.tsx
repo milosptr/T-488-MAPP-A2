@@ -12,6 +12,14 @@ export default function AppLayout() {
             }}
         >
             <Stack.Screen name="index" />
+            <Stack.Screen
+                name="contacts/[id]"
+                options={{
+                    headerShown: true,
+                    title: 'Contact',
+                    headerBackTitle: 'Back',
+                }}
+            />
         </Stack>
     );
 }

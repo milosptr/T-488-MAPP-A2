@@ -1,5 +1,5 @@
-export * from './ui';
+export * from './contacts';
 
 export * from './layout';
 
-export * from './bottom-sheet';
+export * from './ui';
