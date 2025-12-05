@@ -21,9 +21,10 @@ The application features a clean, intuitive interface with contact list viewing 
 
 ## Screenshots
 
-| **Dashboard**                           | **Single Contact**                         | **Edit Contact**                              |
-| --------------------------------------- | ------------------------------------------ | --------------------------------------------- |
-| ![Dashboard](docs/dashboard-screen.png) | ![Single Contact](docs/contact-screen.png) | ![Edit Contact](docs/edit-contact-screen.png) |
+| **Dashboard**                                | **Single Contact**                              | **Edit Contact**                                   |
+| -------------------------------------------- | ----------------------------------------------- | -------------------------------------------------- |
+| ![Dashboard](docs/dashboard-screen.png)      | ![Single Contact](docs/contact-screen.png)      | ![Edit Contact](docs/edit-contact-screen.png)      |
+| ![Dashboard](docs/dashboard-dark-screen.png) | ![Single Contact](docs/contact-dark-screen.png) | ![Edit Contact](docs/edit-contact-dark-screen.png) |
 
 ## Setup Instructions
 
