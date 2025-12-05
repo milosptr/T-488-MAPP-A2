@@ -19,6 +19,12 @@ The Contactor is a mobile contacts management application built with React Nativ
 
 The application features a clean, intuitive interface with contact list viewing (alphabetically sorted), real-time search functionality, detailed contact views, and form-based contact management. Built with modern mobile development practices using Expo Router for file-based navigation, Zustand for state management, and TypeScript for type safety.
 
+## Screenshots
+
+| **Dashboard**                           | **Single Contact**                         | **Edit Contact**                              |
+| --------------------------------------- | ------------------------------------------ | --------------------------------------------- |
+| ![Dashboard](docs/dashboard-screen.png) | ![Single Contact](docs/contact-screen.png) | ![Edit Contact](docs/edit-contact-screen.png) |
+
 ## Setup Instructions
 
 ### Prerequisites

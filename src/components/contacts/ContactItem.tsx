@@ -20,6 +20,7 @@ export const ContactItem = memo(({ item, onPress }: ContactItemProps) => {
     return (
         <Pressable
             onPress={onPress}
+            unstable_pressDelay={100}
             style={[
                 styles.pressableContainer,
                 {
