@@ -21,7 +21,7 @@ export const ContactItem = memo(({ item, onPress }: ContactItemProps) => {
         <Pressable
             onPress={onPress}
             style={[
-                styles.container,
+                styles.pressableContainer,
                 {
                     backgroundColor: theme.surface,
                     borderWidth: 1,
@@ -29,26 +29,38 @@ export const ContactItem = memo(({ item, onPress }: ContactItemProps) => {
                 },
             ]}
         >
-            {item.image ? (
-                <Image source={{ uri: item.image }} style={styles.avatar} />
-            ) : (
-                <RNView
-                    style={[styles.avatarPlaceholder, { backgroundColor: theme.primaryContainer }]}
+            {({ pressed }) => (
+                <View
+                    style={{
+                        ...styles.container,
+                        opacity: pressed ? 0.75 : 1,
+                    }}
                 >
-                    <Text style={[styles.avatarText, { color: theme.onPrimaryContainer }]}>
-                        {item.name.charAt(0).toUpperCase()}
-                    </Text>
-                </RNView>
+                    {item.image ? (
+                        <Image source={{ uri: item.image }} style={styles.avatar} />
+                    ) : (
+                        <RNView
+                            style={[
+                                styles.avatarPlaceholder,
+                                { backgroundColor: theme.primaryContainer },
+                            ]}
+                        >
+                            <Text style={[styles.avatarText, { color: theme.onPrimaryContainer }]}>
+                                {item.name.charAt(0).toUpperCase()}
+                            </Text>
+                        </RNView>
+                    )}
+
+                    <View style={styles.info}>
+                        <Text style={styles.name}>{item.name}</Text>
+                        <Text style={[styles.phone, { color: theme.onSurfaceVariant }]}>
+                            {item.phoneNumber}
+                        </Text>
+                    </View>
+
+                    <Ionicons name="chevron-forward" size={20} color={theme.onSurfaceVariant} />
+                </View>
             )}
-
-            <View style={styles.info}>
-                <Text style={styles.name}>{item.name}</Text>
-                <Text style={[styles.phone, { color: theme.onSurfaceVariant }]}>
-                    {item.phoneNumber}
-                </Text>
-            </View>
-
-            <Ionicons name="chevron-forward" size={20} color={theme.onSurfaceVariant} />
         </Pressable>
     );
 });
@@ -56,11 +68,13 @@ export const ContactItem = memo(({ item, onPress }: ContactItemProps) => {
 ContactItem.displayName = 'ContactItem';
 
 const styles = StyleSheet.create({
+    pressableContainer: {
+        padding: spacing.md,
+        borderRadius: borderRadius.md,
+    },
     container: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: spacing.md,
-        borderRadius: borderRadius.md,
         gap: spacing.md,
     },
     avatar: {
