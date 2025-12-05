@@ -1,9 +1,11 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Crypto from 'expo-crypto';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { Contact, CreateContactInput, UpdateContactInput } from '@/src/types';
+
+import { fileSystemStorage } from './fileSystemStorage';
 
 interface StoreState {
     contacts: Contact[];
@@ -14,8 +16,6 @@ interface StoreState {
     importContacts: (contacts: Contact[]) => void;
 }
 
-const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
 const useStoreBase = create<StoreState>()(
     persist(
         (set, get) => ({
@@ -24,7 +24,7 @@ const useStoreBase = create<StoreState>()(
             addContact: (input: CreateContactInput) => {
                 const now = new Date().toISOString();
                 const newContact: Contact = {
-                    id: generateId(),
+                    id: Crypto.randomUUID(),
                     ...input,
                     createdAt: now,
                     updatedAt: now,
@@ -67,7 +67,7 @@ const useStoreBase = create<StoreState>()(
         }),
         {
             name: 'mapp-store',
-            storage: createJSONStorage(() => AsyncStorage),
+            storage: createJSONStorage(() => fileSystemStorage),
             partialize: state => ({
                 contacts: state.contacts,
             }),

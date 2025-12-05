@@ -1,11 +1,11 @@
 import * as Contacts from 'expo-contacts';
+import * as Crypto from 'expo-crypto';
+import * as Haptics from 'expo-haptics';
 import { useCallback, useState } from 'react';
 import { Alert } from 'react-native';
 
 import { useStore } from '@/src/store/useStore';
 import type { Contact } from '@/src/types';
-
-const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 export const useImportContacts = () => {
     const [isImporting, setIsImporting] = useState(false);
@@ -52,7 +52,6 @@ export const useImportContacts = () => {
                 return;
             }
 
-            // Check for duplicates based on phone number
             const existingPhones = new Set(
                 existingContacts.map(c => c.phoneNumber.replace(/\D/g, ''))
             );
@@ -73,7 +72,7 @@ export const useImportContacts = () => {
 
                 const now = new Date().toISOString();
                 newContacts.push({
-                    id: generateId(),
+                    id: Crypto.randomUUID(),
                     name: contact.name || 'Unknown',
                     phoneNumber,
                     image: contact.image?.uri || null,
@@ -91,9 +90,11 @@ export const useImportContacts = () => {
                     ? `Imported ${newContacts.length} contacts. Skipped ${skippedCount} duplicates.`
                     : `Successfully imported ${newContacts.length} contacts.`;
 
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             Alert.alert('Import Complete', message);
         } catch (error) {
             console.error('Error importing contacts:', error);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             Alert.alert('Import Failed', 'An error occurred while importing contacts.');
         } finally {
             setIsImporting(false);

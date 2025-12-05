@@ -1,18 +1,3 @@
-export const PRESET_COLORS = [
-    '#E53935',
-    '#FB8C00',
-    '#FDD835',
-    '#7CB342',
-    '#43A047',
-    '#00897B',
-    '#00ACC1',
-    '#29B6F6',
-    '#3949AB',
-    '#8E24AA',
-    '#D81B60',
-    '#F06292',
-];
-
 const palette = {
     primary: '#2D2F4C',
     primaryLight: '#464A6E',
@@ -37,6 +22,9 @@ const palette = {
     success: '#4A8B5C',
     successLight: '#6AAE7A',
     successContainer: '#E8F4EB',
+
+    action: '#4C67FF',
+    actionLight: '#6B82FF',
 };
 
 export default {
@@ -69,6 +57,9 @@ export default {
         onSuccess: palette.white,
         successContainer: palette.successContainer,
         onSuccessContainer: palette.success,
+
+        action: palette.action,
+        onAction: palette.white,
 
         scrim: 'rgba(39, 40, 37, 0.5)',
         inverseSurface: palette.black,
@@ -104,6 +95,9 @@ export default {
         onSuccess: palette.white,
         successContainer: '#1E3A26',
         onSuccessContainer: palette.successLight,
+
+        action: palette.actionLight,
+        onAction: palette.white,
 
         scrim: 'rgba(0, 0, 0, 0.7)',
         inverseSurface: palette.white,

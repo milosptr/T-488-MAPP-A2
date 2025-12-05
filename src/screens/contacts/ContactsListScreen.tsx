@@ -1,29 +1,24 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
     FlatList,
-    Image,
-    View as RNView,
     StyleSheet,
     TextInput,
     TouchableOpacity,
 } from 'react-native';
-import { TouchableOpacity as GHTouchableOpacity, Swipeable } from 'react-native-gesture-handler';
 
-import { SafeAreaScreen } from '@/src/components';
+import { ContactItem, SafeAreaScreen } from '@/src/components';
+import { SwipeableRow } from '@/src/components/ui/SwipeableRow';
 import { Text, View } from '@/src/components/ui/Themed';
 import { borderRadius, spacing } from '@/src/constants/DesignTokens';
 import { useImportContacts } from '@/src/hooks/useImportContacts';
 import { useTheme } from '@/src/hooks/useTheme';
 import { useStore } from '@/src/store/useStore';
 import type { Contact } from '@/src/types';
-
-
-
-const AVATAR_SIZE = 48;
 
 export const ContactsListScreen = () => {
     const theme = useTheme();
@@ -33,130 +28,73 @@ export const ContactsListScreen = () => {
     const { isImporting, handleImport } = useImportContacts();
 
     const filteredAndSortedContacts = useMemo(() => {
-        const filtered = contacts.filter(contact =>
-            contact.name.toLowerCase().includes(searchQuery.toLowerCase())
+        const filtered = contacts.filter(
+            contact =>
+                contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                contact.phoneNumber.includes(searchQuery)
         );
 
         return filtered.sort((a, b) => a.name.localeCompare(b.name));
     }, [contacts, searchQuery]);
 
     const handleAddContact = useCallback(() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         router.push('/modals/add-contact');
+    }, []);
+
+    const handleImportWithHaptics = useCallback(() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        handleImport();
+    }, [handleImport]);
+
+    const handleClearSearch = useCallback(() => {
+        Haptics.selectionAsync();
+        setSearchQuery('');
     }, []);
 
     const handleContactPress = useCallback((contact: Contact) => {
         router.push(`/contacts/${contact.id}`);
     }, []);
 
-    const handleDeleteContact = useCallback((contactId: string, contactName: string) => {
-        Alert.alert(
-            'Delete Contact',
-            `Are you sure you want to delete ${contactName}?`,
-            [
+    const handleDeleteContact = useCallback(
+        (contactId: string, contactName: string) => {
+            Alert.alert('Delete Contact', `Are you sure you want to delete ${contactName}?`, [
                 { text: 'Cancel', style: 'cancel' },
                 {
                     text: 'Delete',
                     style: 'destructive',
                     onPress: () => deleteContact(contactId),
                 },
-            ]
-        );
-        }, [deleteContact]);
-
-    const renderContactItem = useCallback(
-    ({ item }: { item: Contact }) => {
-        let swipeableRef: Swipeable | null = null;
-
-        return (
-        <Swipeable
-            ref={(ref) => { swipeableRef = ref; }}
-            friction={2}
-            leftThreshold={40}
-            rightThreshold={40}
-            overshootLeft={false}
-            overshootRight={false}
-            onSwipeableOpen={(direction) => {
-                if (direction === 'right') {
-                    handleDeleteContact(item.id, item.name);
-                    swipeableRef?.close();
-                } else if (direction === 'left') {
-                    router.push(`/modals/edit-contact/${item.id}` as any);
-                    swipeableRef?.close();
-                }
-            }}
-            renderLeftActions={() => (
-                <View
-                    style={[
-                        styles.contactItem,
-                        {
-                            backgroundColor: '#4c67ffff',
-                            borderWidth: 1,
-                            borderColor: theme.outline,
-                        },
-                        ]}
-                >
-                    <Ionicons name="pencil" size={24} color="white" />
-                    <Text style={{ color: 'white', fontSize: 12, marginTop: 4 }}>Edit</Text>
-                </View>
-            )}
-            renderRightActions={() => (
-                <View
-                    style={[
-                        styles.contactItem,
-                        {
-                            backgroundColor: '#df2b0bff',
-                            borderWidth: 1,
-                            borderColor: theme.outline,
-                        },
-                        ]}
-                >
-                    <Ionicons name="trash" size={24} color="white" />
-                    <Text style={{ color: 'white', fontSize: 12, marginTop: 4 }}>Delete</Text>
-                </View>
-            )}
-            >
-            <GHTouchableOpacity
-                onPress={() => handleContactPress(item)}
-                activeOpacity={0.55}
-                style={[
-                styles.contactItem,
-                {
-                    backgroundColor: theme.surface,
-                    borderWidth: 1,
-                    borderColor: theme.outline,
-                },
-                ]}
-            >
-                {item.image ? (
-                <Image source={{ uri: item.image }} style={styles.avatar} />
-                ) : (
-                <RNView
-                    style={[
-                    styles.avatarPlaceholder,
-                    { backgroundColor: theme.primaryContainer },
-                    ]}
-                >   
-                    <Text style={[styles.avatarText, { color: theme.onPrimaryContainer }]}>
-                    {item.name.charAt(0).toUpperCase()}
-                    </Text>
-                </RNView>
-                )}
-
-                <View style={styles.contactInfo}>
-                <Text style={styles.contactName}>{item.name}</Text>
-                <Text style={[styles.contactPhone, { color: theme.onSurfaceVariant }]}>
-                    {item.phoneNumber}
-                </Text>
-                </View>
-
-                <Ionicons name="chevron-forward" size={20} color={theme.onSurfaceVariant} />
-            </GHTouchableOpacity>
-        </Swipeable>
-        );
-    },
-    [theme, handleContactPress, handleDeleteContact]
+            ]);
+        },
+        [deleteContact]
     );
 
+    const renderContactItem = useCallback(
+        ({ item }: { item: Contact }) => (
+            <SwipeableRow
+                leftAction={{
+                    icon: 'pencil',
+                    label: 'Edit',
+                    backgroundColor: theme.action,
+                    onAction: () =>
+                        router.push({
+                            pathname: '/modals/edit-contact/[id]',
+                            params: { id: item.id },
+                        }),
+                }}
+                rightAction={{
+                    icon: 'trash',
+                    label: 'Delete',
+                    backgroundColor: theme.error,
+                    onAction: () => handleDeleteContact(item.id, item.name),
+                }}
+            >
+                <ContactItem item={item} onPress={() => handleContactPress(item)} />
+            </SwipeableRow>
+        ),
+        [theme, handleContactPress, handleDeleteContact]
+    );
 
     const renderEmptyState = useCallback(
         () => (
@@ -182,7 +120,7 @@ export const ContactsListScreen = () => {
                 <View style={styles.headerButtons}>
                     <TouchableOpacity
                         style={[styles.headerButton, { backgroundColor: theme.secondaryContainer }]}
-                        onPress={handleImport}
+                        onPress={handleImportWithHaptics}
                         activeOpacity={0.8}
                         disabled={isImporting}
                     >
@@ -227,7 +165,7 @@ export const ContactsListScreen = () => {
                     autoCorrect={false}
                 />
                 {searchQuery.length > 0 && (
-                    <TouchableOpacity onPress={() => setSearchQuery('')}>
+                    <TouchableOpacity onPress={handleClearSearch}>
                         <Ionicons name="close-circle" size={20} color={theme.onSurfaceVariant} />
                     </TouchableOpacity>
                 )}
@@ -283,40 +221,6 @@ const styles = StyleSheet.create({
     listContent: {
         flexGrow: 1,
         gap: spacing.sm,
-    },
-    contactItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: spacing.md,
-        borderRadius: borderRadius.md,
-        gap: spacing.md,
-    },
-    avatar: {
-        width: AVATAR_SIZE,
-        height: AVATAR_SIZE,
-        borderRadius: AVATAR_SIZE / 2,
-    },
-    avatarPlaceholder: {
-        width: AVATAR_SIZE,
-        height: AVATAR_SIZE,
-        borderRadius: AVATAR_SIZE / 2,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    avatarText: {
-        fontSize: 20,
-        fontWeight: '600',
-    },
-    contactInfo: {
-        flex: 1,
-    },
-    contactName: {
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    contactPhone: {
-        fontSize: 14,
-        marginTop: 2,
     },
     emptyState: {
         flex: 1,

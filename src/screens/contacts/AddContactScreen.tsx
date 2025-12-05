@@ -1,9 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import {
-    Alert,
     Image,
     KeyboardAvoidingView,
     Platform,
@@ -18,6 +16,8 @@ import { Button } from '@/src/components/ui/Button';
 import { TextInput } from '@/src/components/ui/TextInput';
 import { Text, View } from '@/src/components/ui/Themed';
 import { spacing } from '@/src/constants/DesignTokens';
+import { useContactForm } from '@/src/hooks/useContactForm';
+import { useImagePicker } from '@/src/hooks/useImagePicker';
 import { useTheme } from '@/src/hooks/useTheme';
 import { useStore } from '@/src/store/useStore';
 
@@ -27,85 +27,29 @@ export const AddContactScreen = () => {
     const theme = useTheme();
     const addContact = useStore(state => state.addContact);
 
-    const [name, setName] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
-    const [image, setImage] = useState<string | null>(null);
-    const [errors, setErrors] = useState<{ name?: string; phoneNumber?: string }>({});
+    const {
+        name,
+        phoneNumber,
+        image,
+        errors,
+        setName,
+        setPhoneNumber,
+        setImage,
+        validate,
+        getFormData,
+    } = useContactForm();
 
-    const pickImage = useCallback(async () => {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-            Alert.alert(
-                'Permission Required',
-                'Please grant camera roll permissions to add a photo.'
-            );
-            return;
-        }
-
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 0.8,
-        });
-
-        if (!result.canceled && result.assets[0]) {
-            setImage(result.assets[0].uri);
-        }
-    }, []);
-
-    const takePhoto = useCallback(async () => {
-        const { status } = await ImagePicker.requestCameraPermissionsAsync();
-        if (status !== 'granted') {
-            Alert.alert('Permission Required', 'Please grant camera permissions to take a photo.');
-            return;
-        }
-
-        const result = await ImagePicker.launchCameraAsync({
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 0.8,
-        });
-
-        if (!result.canceled && result.assets[0]) {
-            setImage(result.assets[0].uri);
-        }
-    }, []);
-
-    const showImageOptions = useCallback(() => {
-        Alert.alert('Add Photo', 'Choose an option', [
-            { text: 'Take Photo', onPress: takePhoto },
-            { text: 'Choose from Library', onPress: pickImage },
-            { text: 'Cancel', style: 'cancel' },
-        ]);
-    }, [takePhoto, pickImage]);
-
-    const validate = useCallback(() => {
-        const newErrors: { name?: string; phoneNumber?: string } = {};
-
-        if (!name.trim()) {
-            newErrors.name = 'Name is required';
-        }
-
-        if (!phoneNumber.trim()) {
-            newErrors.phoneNumber = 'Phone number is required';
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    }, [name, phoneNumber]);
+    const { showImageOptions } = useImagePicker({
+        onImageChange: setImage,
+        showRemoveOption: false,
+    });
 
     const handleSubmit = useCallback(() => {
         if (!validate()) return;
 
-        addContact({
-            name: name.trim(),
-            phoneNumber: phoneNumber.trim(),
-            image,
-        });
-
+        addContact(getFormData());
         router.back();
-    }, [validate, addContact, name, phoneNumber, image]);
+    }, [validate, addContact, getFormData]);
 
     return (
         <SafeAreaScreen edges={['bottom']} style={{ backgroundColor: theme.background }}>

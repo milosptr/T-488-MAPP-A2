@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { Alert, Image, Linking, StyleSheet, TouchableOpacity, View as RNView } from 'react-native';
@@ -20,6 +21,7 @@ export const ContactDetailScreen = () => {
     const handleCall = useCallback(() => {
         if (!contact?.phoneNumber) return;
 
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         const phoneUrl = `tel:${contact.phoneNumber}`;
         Linking.canOpenURL(phoneUrl).then(supported => {
             if (supported) {
@@ -32,12 +34,14 @@ export const ContactDetailScreen = () => {
 
     const handleEdit = useCallback(() => {
         if (!contact) return;
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         router.push(`/modals/edit-contact/${contact.id}`);
     }, [contact]);
 
     const handleDelete = useCallback(() => {
         if (!contact) return;
 
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
         Alert.alert(
             'Delete Contact',
             `Are you sure you want to delete ${contact.name}?`,

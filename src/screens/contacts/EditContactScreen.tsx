@@ -1,9 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import {
-    Alert,
     Image,
     KeyboardAvoidingView,
     Platform,
@@ -18,6 +16,8 @@ import { Button } from '@/src/components/ui/Button';
 import { TextInput } from '@/src/components/ui/TextInput';
 import { Text, View } from '@/src/components/ui/Themed';
 import { spacing } from '@/src/constants/DesignTokens';
+import { useContactForm } from '@/src/hooks/useContactForm';
+import { useImagePicker } from '@/src/hooks/useImagePicker';
 import { useTheme } from '@/src/hooks/useTheme';
 import { useStore } from '@/src/store/useStore';
 
@@ -29,106 +29,34 @@ export const EditContactScreen = () => {
     const contact = useStore(state => state.getContactById(id));
     const updateContact = useStore(state => state.updateContact);
 
-    const [name, setName] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
-    const [image, setImage] = useState<string | null>(null);
-    const [errors, setErrors] = useState<{ name?: string; phoneNumber?: string }>({});
+    const {
+        name,
+        phoneNumber,
+        image,
+        errors,
+        setName,
+        setPhoneNumber,
+        setImage,
+        validate,
+        getFormData,
+    } = useContactForm({ initialData: contact });
 
-    useEffect(() => {
-        if (contact) {
-            setName(contact.name);
-            setPhoneNumber(contact.phoneNumber);
-            setImage(contact.image);
-        }
-    }, [contact]);
-
-    const pickImage = useCallback(async () => {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-            Alert.alert(
-                'Permission Required',
-                'Please grant camera roll permissions to add a photo.'
-            );
-            return;
-        }
-
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 0.8,
-        });
-
-        if (!result.canceled && result.assets[0]) {
-            setImage(result.assets[0].uri);
-        }
-    }, []);
-
-    const takePhoto = useCallback(async () => {
-        const { status } = await ImagePicker.requestCameraPermissionsAsync();
-        if (status !== 'granted') {
-            Alert.alert('Permission Required', 'Please grant camera permissions to take a photo.');
-            return;
-        }
-
-        const result = await ImagePicker.launchCameraAsync({
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 0.8,
-        });
-
-        if (!result.canceled && result.assets[0]) {
-            setImage(result.assets[0].uri);
-        }
-    }, []);
-
-    const showImageOptions = useCallback(() => {
-        const options = [
-            { text: 'Take Photo', onPress: takePhoto },
-            { text: 'Choose from Library', onPress: pickImage },
-        ];
-
-        if (image) {
-            options.push({
-                text: 'Remove Photo',
-                onPress: async () => {
-                    setImage(null);
-                },
-            });
-        }
-
-        options.push({ text: 'Cancel', onPress: async () => {} });
-
-        Alert.alert('Change Photo', 'Choose an option', options);
-    }, [takePhoto, pickImage, image]);
-
-    const validate = useCallback(() => {
-        const newErrors: { name?: string; phoneNumber?: string } = {};
-
-        if (!name.trim()) {
-            newErrors.name = 'Name is required';
-        }
-
-        if (!phoneNumber.trim()) {
-            newErrors.phoneNumber = 'Phone number is required';
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    }, [name, phoneNumber]);
+    const { showImageOptions } = useImagePicker({
+        onImageChange: setImage,
+        showRemoveOption: true,
+        currentImage: image,
+    });
 
     const handleSubmit = useCallback(() => {
         if (!contact || !validate()) return;
 
         updateContact({
             id: contact.id,
-            name: name.trim(),
-            phoneNumber: phoneNumber.trim(),
-            image,
+            ...getFormData(),
         });
 
         router.back();
-    }, [contact, validate, updateContact, name, phoneNumber, image]);
+    }, [contact, validate, updateContact, getFormData]);
 
     if (!contact) {
         return (
